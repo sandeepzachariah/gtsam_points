@@ -4,10 +4,20 @@ project(gtsam_points VERSION 1.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
+
+# Switch between pcl::PointXYZ  (OFF)  and pcl::PointXYZI  (ON)
+option(GTSAM_POINTS_USE_INTENSITY
+       "Build with LiDAR intensity support (PointXYZI everywhere)" ON)
+
+# === 2.  Emit the compile definition for every target in this project ======
+if (GTSAM_POINTS_USE_INTENSITY)
+  add_definitions(-DGTSAM_POINTS_USE_INTENSITY)
+endif ()
 
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_TESTS_PCL "Build tests that require PCL" OFF)
@@ -33,6 +43,12 @@ find_package(Boost REQUIRED COMPONENTS graph filesystem)
 find_package(GTSAM REQUIRED)
 find_package(GTSAM_UNSTABLE REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(PCL 1.8 REQUIRED COMPONENTS common io)
+
+include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 
 if(BUILD_WITH_TBB)
   find_package(TBB REQUIRED)

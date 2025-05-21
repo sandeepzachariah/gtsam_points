@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 
 #include <gtsam_points/types/point_cloud.hpp>
+#include <gtsam_points/types/point_type_alias.hpp>
 
 struct CUstream_st;
 
@@ -295,8 +296,18 @@ double median_distance(const PointCloud::ConstPtr& points, size_t max_scan_count
  * @param downsample_resolution  Downsampling resolution
  * @return                       Merged frame
  */
-PointCloud::Ptr
-merge_frames(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution);
+
+
+
+// -------  EDIT 1 -----------
+// PointCloud::Ptr
+// merge_frames(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution);
+
+template <typename PointT = gtsam_points::PointT>
+typename pcl::PointCloud<PointT>::Ptr
+merge_frames(const std::vector<Eigen::Isometry3d>& poses,
+             const std::vector<typename pcl::PointCloud<PointT>::ConstPtr>& frames,
+             double downsample_resolution);
 
 /// @brief Merge a set of frames into one frame
 template <typename PointCloudPtr>
@@ -315,18 +326,36 @@ merge_frames(const std::vector<Eigen::Isometry3d>& poses, const std::vector<Poin
  * @param stream                 CUDA stream
  * @return                       Merged frame (PointCloudGPU)
  */
-PointCloud::Ptr merge_frames_gpu(
-  const std::vector<Eigen::Isometry3d>& poses,
-  const std::vector<PointCloud::ConstPtr>& frames,
-  double downsample_resolution,
-  CUstream_st* stream = 0);
 
-template <typename PointCloudPtr>
-std::enable_if_t<!std::is_same_v<PointCloudPtr, PointCloud::ConstPtr>, PointCloud::Ptr> merge_frames_gpu(
-  const std::vector<Eigen::Isometry3d>& poses,
-  const std::vector<PointCloudPtr>& frames,
-  double downsample_resolution,
-  CUstream_st* stream = 0) {
+// ------- EDIT 2 -----------
+// PointCloud::Ptr merge_frames_gpu(
+//   const std::vector<Eigen::Isometry3d>& poses,
+//   const std::vector<PointCloud::ConstPtr>& frames,
+//   double downsample_resolution,
+//   CUstream_st* stream = 0);
+
+// template <typename PointCloudPtr>
+// std::enable_if_t<!std::is_same_v<PointCloudPtr, PointCloud::ConstPtr>, PointCloud::Ptr> merge_frames_gpu(
+//   const std::vector<Eigen::Isometry3d>& poses,
+//   const std::vector<PointCloudPtr>& frames,
+//   double downsample_resolution,
+//   CUstream_st* stream = 0) {
+//   std::vector<PointCloud::ConstPtr> frames_(frames.begin(), frames.end());
+//   return merge_frames_gpu(poses, frames_, downsample_resolution, stream);
+// }
+
+template <typename PointT = gtsam_points::PointT>
+typename pcl::PointCloud<PointT>::Ptr
+PointCloud::Ptr merge_frames_gpu(const std::vector<Eigen::Isometry3d>& poses,
+             const std::vector<typename pcl::PointCloud<PointT>::ConstPtr>& frames,
+             double downsample_resolution,
+             CUstream_st* stream = 0);
+template <typename PointT = gtsam_points::PointT>
+std::enable_if_t<!std::is_same_v<PointT, PointCloud::ConstPtr>, PointCloud::Ptr>
+merge_frames_gpu(const std::vector<Eigen::Isometry3d>& poses,
+             const std::vector<typename pcl::PointCloud<PointT>::ConstPtr>& frames,
+             double downsample_resolution,
+             CUstream_st* stream = 0) {
   std::vector<PointCloud::ConstPtr> frames_(frames.begin(), frames.end());
   return merge_frames_gpu(poses, frames_, downsample_resolution, stream);
 }
@@ -339,14 +368,24 @@ std::enable_if_t<!std::is_same_v<PointCloudPtr, PointCloud::ConstPtr>, PointClou
  * @param downsample_resolution  Downsampling resolution
  * @return                       Merged frame
  */
-PointCloud::Ptr
-merge_frames_auto(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution);
 
-template <typename PointCloudPtr>
-std::enable_if_t<!std::is_same_v<PointCloudPtr, PointCloud::ConstPtr>, PointCloud::Ptr>
-merge_frames_auto(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution) {
+// ------- EDIT 3 -----------
+// PointCloud::Ptr
+// merge_frames_auto(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution);
+
+// template <typename PointCloudPtr>
+// std::enable_if_t<!std::is_same_v<PointCloudPtr, PointCloud::ConstPtr>, PointCloud::Ptr>
+// merge_frames_auto(const std::vector<Eigen::Isometry3d>& poses, const std::vector<PointCloud::ConstPtr>& frames, double downsample_resolution) {
+//   std::vector<PointCloud::ConstPtr> frames_(frames.begin(), frames.end());
+//   return merge_frames_auto(poses, frames_, downsample_resolution);
+// }
+
+template <typename PointT = gtsam_points::PointT>
+typename pcl::PointCloud<PointT>::Ptr
+merge_frames_auto(const std::vector<Eigen::Isometry3d>& poses,
+             const std::vector<typename pcl::PointCloud<PointT>::ConstPtr>& frames,
+             double downsample_resolution) {
   std::vector<PointCloud::ConstPtr> frames_(frames.begin(), frames.end());
   return merge_frames_auto(poses, frames_, downsample_resolution);
-}
 
 }  // namespace gtsam_points
