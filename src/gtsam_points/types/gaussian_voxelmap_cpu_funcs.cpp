@@ -77,13 +77,14 @@ merge_frames(const std::vector<Eigen::Isometry3d>& poses, const std::vector<Poin
     dest_indices[frame_id][point_id] = num_voxels;
   }
   num_voxels++;
-
   auto merged = std::make_shared<gtsam_points::PointCloudCPU>();
   merged->num_points = num_voxels;
   merged->points_storage.resize(num_voxels, Eigen::Vector4d::Zero());
   merged->covs_storage.resize(num_voxels, Eigen::Matrix4d::Zero());
+  merged->intensities_storage.resize(num_voxels, 0.0);  
   merged->points = merged->points_storage.data();
   merged->covs = merged->covs_storage.data();
+  merged->intensities = merged->intensities_storage.data();
 
   for (int i = 0; i < frames.size(); i++) {
     const auto& pose = poses[i];
@@ -91,14 +92,20 @@ merge_frames(const std::vector<Eigen::Isometry3d>& poses, const std::vector<Poin
       const size_t dest = dest_indices[i][j];
       merged->points[dest] += pose * frames[i]->points[j];
       merged->covs[dest] += pose.matrix() * frames[i]->covs[j] * pose.matrix().transpose();
+      // check if the frame has intensity
+      if (frames[i]->intensities) {
+        merged->intensities[dest] += frames[i]->intensities[j];
+      } else {
+        merged->intensities[dest] += 0.0;
+      }
+      //merged->intensities[dest] += frames[i]->intensities[j];
     }
   }
-
   for (int i = 0; i < merged->size(); i++) {
     merged->covs[i] /= merged->points[i].w();
     merged->points[i] /= merged->points[i].w();
+    merged->intensities[i] /= merged->points[i].w(); 
   }
-
   return merged;
 }
 
